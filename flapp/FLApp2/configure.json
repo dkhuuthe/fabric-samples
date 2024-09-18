@@ -1,0 +1,15 @@
+{
+    "train_path" : "/home/kdam/temp/DATA/dataset_split/client1",
+    "test_path" : "/home/kdam/temp/DATA/dataset_split/server",
+    "api_path" : "/home/kdam/temp/protoc/example/ex1/myapp/py/ML/APInameseq.txt",
+    "map_path" : "/home/kdam/temp/DATA/binModelData/mapping.txt",
+    "vector_size" : 4,
+    "nfeatures" : 8,
+    "embedding_dim": 64,
+    "share_type" : 0,
+    "data_scale" : 0.8,
+    "flip_percentage" : 0.0,
+    "classifier" : "DNN", 
+    "MASTER_ADDR": "130.104.229.101",
+    "MASTER_PORT" : "5678"
+}
