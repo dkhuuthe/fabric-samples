@@ -281,9 +281,6 @@ public class App implements AutoCloseable {
 				if (event.getEventName().equals(sid) && ucode.equals(payload) ) {
                     System.out.println("\n<-- Chaincode event : " + event.getEventName() + " - " + payload);
 					break;
-				}else if (event.getEventName().equals(sid) && payload.equals(ucode) ) {
-                    System.out.println("\n<-- Chaincode event : " + event.getEventName() + " - " + payload);
-					break;
 				}
 			}
 		}

@@ -124,6 +124,7 @@ class FLTrainer:
         return ret
 
     def do_agg(self):
+        print("****do aggregation")
         ret = FLTrainer.mapp.get(self.sessionID)
         #print(ret==None)
         agg_para = None
@@ -142,13 +143,17 @@ class FLTrainer:
             ret = FLTrainer.mapp.sendAgg(self.sessionID,self.mid, FLTrainer.para_serialize(agg_para))
         else:
             ret = None
-        if ((ret is None) | (len(ret)<=0)):
+        if ((ret is None)):
+            return FLTrainer.FAILED
+        elif (len(ret)<=0):
             return FLTrainer.FAILED
         return FLTrainer.SUCCESS
 
     def receive_update(self):
         ret = FLTrainer.mapp.getAgg(self.sessionID,self.cid, self.mid)
-        if ((ret is None) | (len(ret)<=0)):
+        if ((ret is None)):
+            return FLTrainer.FAILED
+        elif (len(ret)<=0):
             return FLTrainer.FAILED
         para = FLTrainer.para_deserialize(ret)
         torch.nn.utils.vector_to_parameters(para,FLTrainer.MLmodel.parameters())
@@ -167,13 +172,14 @@ class FLTrainer:
         for r in range(1,nrounds+1):
             print(f"round {r}/{nrounds}")
             self.blocknumber,self.sessionID = self.register()
+            time.sleep(5)
             print(f"**sessionID {self.sessionID} blocknumber {self.blocknumber}")
             print(f"**modelID {self.mid} ID {self.cid}")
             for epoch in range(1, nepochs+1):
                 print(f"***epoch {epoch}/{nepochs}")
                 self.train(trainData, FLTrainer.MLmodel, self.criteria, self.opt)
             ucode = self.send_update()
-
+            print(f"send update get {ucode}")
             if self.wait_for_agg(ucode)!="-1":
                 self.do_agg()
             
@@ -240,4 +246,4 @@ if __name__ == "__main__":
     myapp = FLTrainer()
     
     print(myapp.sessionID, myapp.cid, myapp.mid)
-    myapp.run(train_dataloader, test_dataloader,3,1)
+    myapp.run(train_dataloader, test_dataloader,5,1)

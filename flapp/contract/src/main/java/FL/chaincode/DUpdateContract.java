@@ -110,6 +110,7 @@ public final class DUpdateContract implements ContractInterface {
                 nClientUpdates = 0;
                 queueClient.clear();
                 status = "start_round";
+                init_flag = false;
             }catch (Exception e) {
                 e.printStackTrace();
             }finally{
@@ -156,6 +157,7 @@ public final class DUpdateContract implements ContractInterface {
         dUpdateJSON = session.serialize();
         //System.out.printf("RegisterclientID: ID %s\n", clientID);
         logger.info("RegisterclientID: ID " +clientID+ "\n" );
+        logger.info("RegisterclientID: ID " +nClients+ "\n" );
         //logger.log(Level.INFO, "trouble sneezing", ex);
         stub.putState(clientID, dUpdateJSON);
 
@@ -202,6 +204,7 @@ public final class DUpdateContract implements ContractInterface {
         dUpdateJSON = client_session.serialize();
         System.out.printf("UpdateclientID: ID %s\n", clientID);
         stub.putState(clientID, dUpdateJSON);
+        Boolean retflag = false;
         try{
             mutex.acquire();
             if (!queueClient.contains(clientID)){
@@ -209,14 +212,14 @@ public final class DUpdateContract implements ContractInterface {
                 nClientUpdates =queueClient.size();
             }
             
-            
+            retflag = nClientUpdates>=nClients;
         }catch (Exception e) {
             e.printStackTrace();
         }finally{
-                mutex.release();
+            mutex.release();
         }
         
-        if(nClientUpdates>=nClients){
+        if(retflag){
             String updateCode = String.valueOf(nClientUpdates);
             stub.setEvent(sessionID, updateCode.getBytes());
             return nClientUpdates;
@@ -371,6 +374,11 @@ public final class DUpdateContract implements ContractInterface {
                 mutex.release();
             }
         }
+        var client = stub.getState(clientID);
+        if (client!=null){
+            stub.delState(clientID);
+        }
+        
         return updateCode;
     }
 
