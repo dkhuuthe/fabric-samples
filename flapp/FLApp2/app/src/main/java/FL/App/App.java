@@ -405,28 +405,6 @@ public class App implements AutoCloseable {
         return null;
     }
 
-
-
-    public String send_update(final String value,String sID){
-        if (sessionID.equals(sID)){
-            update = value;
-            return update;
-        }else{
-            return null;    
-        }
-        
-    }
-
-    public String receive_update(final String sID){
-        if (sessionID.equals(sID)){
-            return update;
-        }else{
-            return null;    
-        }
-    }
-
-
-    
     
     
 
@@ -437,3 +415,4 @@ public class App implements AutoCloseable {
         App.grpcChannel.shutdownNow().awaitTermination(5, TimeUnit.SECONDS);  
 	}
 }
+

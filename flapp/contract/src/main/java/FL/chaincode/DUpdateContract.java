@@ -89,7 +89,9 @@ public final class DUpdateContract implements ContractInterface {
     @Transaction(intent = Transaction.TYPE.SUBMIT)
     public String RegisterclientID(final Context ctx, final String clientID, final String modelID,  final String update) {
         ChaincodeStub stub = ctx.getStub();
-
+        
+        
+        
         Boolean init_flag = false;
         //byte[] status = stub.getState("status");
         if (status == null) {

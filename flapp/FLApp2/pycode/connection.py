@@ -8,7 +8,8 @@ import time
 import random
 
 
-from py4j.java_gateway import JavaGateway
+from py4j.java_gateway import JavaGateway, GatewayParameters
+from py4j.protocol import Py4JNetworkError
 
 from torch.utils.data import Dataset
 from torchvision import datasets
@@ -29,9 +30,10 @@ print(f"Using {device} device")
 class NeuralNetwork(torch.nn.Module):
     def __init__(self):
         super().__init__()
+        inp_dim = 32*32*3 #28*28;
         self.flatten = torch.nn.Flatten()
         self.linear_relu_stack = torch.nn.Sequential(
-            torch.nn.Linear(28*28, 512),
+            torch.nn.Linear(inp_dim, 512),
             torch.nn.ReLU(),
             torch.nn.Linear(512, 512),
             torch.nn.ReLU(),
@@ -46,7 +48,9 @@ class NeuralNetwork(torch.nn.Module):
 class FLTrainer:
     FAILED = "Failed"
     SUCCESS = "OK"
-    mapp = JavaGateway().entry_point
+    gatewaypara = GatewayParameters(address='127.0.0.1', port=25333, auto_field=False, auto_close=True, auto_convert=False, eager_load=False, ssl_context=None, enable_memory_management=True, read_timeout=0, auth_token=None)
+    gateway = JavaGateway(gateway_parameters =gatewaypara )
+    mapp = gateway.entry_point
     MLmodel = NeuralNetwork().to(device)
     
     def __init__(self):
@@ -71,10 +75,12 @@ class FLTrainer:
     def train(self,dataloader, model, loss_fn, optimizer):
         size = len(dataloader.dataset)
         batch_size = dataloader.batch_size
+        #print(model)
         # Set the model to training mode - important for batch normalization and dropout layers
         # Unnecessary in this situation but added for best practices
         model.train()
         for batch, (X, y) in enumerate(dataloader):
+            #print(X.shape, y.shape)
             # Compute prediction and loss
             pred = model(X)
             loss = loss_fn(pred, y)
@@ -205,7 +211,7 @@ class FLTrainer:
         v = base64.b64encode(v)
         v = v.decode("UTF_8")
         v_str = v
-        #print("size", sys.getsizeof(v))
+        print("size", sys.getsizeof(v))
         return v_str
 
     @staticmethod
@@ -224,14 +230,14 @@ class FLTrainer:
             
 if __name__ == "__main__":
     
-    training_data = datasets.FashionMNIST(
+    training_data = datasets.CIFAR10(
         root="data",
         train=True,
         download=True,
         transform=ToTensor()
     )
     
-    test_data = datasets.FashionMNIST(
+    test_data = datasets.CIFAR10(
         root="data",
         train=False,
         download=True,
@@ -240,10 +246,15 @@ if __name__ == "__main__":
     
     train_dataloader = DataLoader(training_data, batch_size=64, shuffle=True)
     test_dataloader = DataLoader(test_data, batch_size=64, shuffle=True)
+    try:
+        #FLTrainer.mapp.reset()
+        myapp = FLTrainer()
+        myapp.run(train_dataloader, test_dataloader,2,5)
 
-    FLTrainer.mapp.reset()
-    
-    myapp = FLTrainer()
-    
-    print(myapp.sessionID, myapp.cid, myapp.mid)
-    myapp.run(train_dataloader, test_dataloader,5,1)
+    except Py4JNetworkError as e:
+        print("no connection")
+    except:
+        print("other error")
+    finally:
+        myapp.gateway.shutdown()
+
