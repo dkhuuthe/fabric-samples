@@ -256,5 +256,5 @@ if __name__ == "__main__":
     except:
         print("other error")
     finally:
-        myapp.gateway.shutdown()
+        FLTrainer.gateway.shutdown()
 
