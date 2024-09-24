@@ -38,6 +38,34 @@ If you have [yq](https://mikefarah.gitbook.io/yq/) installed, run the following 
 yq -i 'del(.chaincode.externalBuilders) | .chaincode.externalBuilders[0].name = "ccaas_builder" | .chaincode.externalBuilders[0].path = env(PWD) + "/builders/ccaas" | .chaincode.externalBuilders[0].propagateEnvironment[0] = "CHAINCODE_AS_A_SERVICE_BUILDER_CONFIG"' config/core.yaml
 ```
 
+## Run the chaincode without docker
+You can run chaincode as binaries by enabling the external builders in the core.yaml.  The external builders are configured to work with golang and node chaincode.  This is accomplished by running the following command:
+
+```
+$ ./configureExternalBuilders.sh
+```
+
+This script copies the config files from `fabric-samples/config` to `fabric-samples/test-network-nano-bash/config` and adds the external builders to the core.yaml.  The following is an example of the additions to core.yaml.
+
+```
+    externalBuilders:
+       - name: golang
+         path: /Users/nanofab/fabric-samples/test-network-nano-bash/external_builders/golang
+         propagateEnvironment:
+           - HOME   
+       - name: node
+         path: /Users/nanofab/fabric-samples/test-network-nano-bash/external_builders/node
+         propagateEnvironment:
+           - HOME
+           - npm_config_cache
+```
+
+Note:  Golang chaincode will require at least Go 1.20 installed and in the path.  Node chaincode will require at least Node 20 be installed.
+
+
+The peer shell scripts detect the presence of the config directory in the `test-network-nano-bash/` directory and will use these config files if they exist.  In order to revert to docker, simply delete the config directory in `test-network-nano-bash/`.
+
+
 # Instructions for starting network
 ## Running each component separately
 
@@ -59,6 +87,16 @@ If you have trouble running bash scripts in your environment, you can just as ea
 
 Note the syntax of running the scripts. The peer admin scripts set the admin environment variables and must be run with the `source` command in order that the exported environment variables can be utilized by any subsequent user commands.
 
+## Running each component separately with CAs
+
+These instructions are for running the CAs from terminal sessions.  Open terminal windows for 3 CAs as seen in the following terminal setup. These instructions should be followd before opening the ordering and peer windows described above.
+
+![CA Terminal setup](ca_terminal_setup.png)
+
+- cd to the `test-network-nano-bash` directory in each terminal window
+- Before running the  `./generate_artifacts.sh -ca` in the first orderer terminal, run `./ordererca.sh`, `./org1ca.sh`, `./org2ca.sh` in the repsective terminals.
+- In the first orderer terminal, run `./generate_artifacts.sh -ca` to generate crypto material using the CAs and application channel genesis block and configuration transactions (calls configtxgen). The artifacts will be created in the `crypto-config` and `channel-artifacts` directories. If you are running BFT consensus then run `./generate_artifacts.sh BFT -ca`.  All artifacts generated with the CA will conform to the same directory structure as cryptogen.
+
 ## Starting the network with one command
 
 Using the individual scripts above gives you more control of the process of starting a Fabric network and demonstrates how all the required components fit together, however the same network can also be started using a single script for convenience.
@@ -71,6 +109,11 @@ For Raft consensus type:
 For BFT consensus type:
 ```shell
 ./network.sh start -o BFT
+```
+
+For Raft consensus type using CAs:
+```shell
+./network.sh start -ca
 ```
 
 After the network has started, use separate terminals to run peer commands.
